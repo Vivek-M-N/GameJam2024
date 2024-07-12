@@ -55,8 +55,8 @@ class GameView(arcade.View):
             self.current_y = y
 
     def draw_trajectory(self, start_x, start_y, current_x, current_y):
-        velocity_x = (start_x - current_x) / 10  # Adjust scaling factor as needed
-        velocity_y = (start_y - current_y) / 10  # Adjust scaling factor as needed
+        velocity_x = (start_x - current_x) / 2  # Adjust scaling factor as needed
+        velocity_y = (start_y - current_y) / 2  # Adjust scaling factor as needed
         
         for t in range(1, 100):  # Increase range for a longer trajectory
             t /= 10  # Scale time down
