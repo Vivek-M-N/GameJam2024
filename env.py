@@ -59,7 +59,7 @@ class GameView(arcade.View):
             self.end_x = start_x + velocity_x * t
             self.end_y = start_y + velocity_y * t - 0.5 * GRAVITY * t ** 2
             
-            if self.end_y < 0 or self.end_y > SCREEN_HEIGHT or self.end_x < 0 or self.end_x > SCREEN_WIDTH :  # Stop if it hits the ground
+            if self.end_y < self.ball.RADIUS or self.end_y > SCREEN_HEIGHT-self.ball.RADIUS or self.end_x < self.ball.RADIUS or self.end_x > SCREEN_WIDTH-self.ball.RADIUS :  # Stop if it hits the ground
                 break
 
             arcade.draw_circle_filled(self.end_x, self.end_y, 2, arcade.color.YELLOW)
@@ -68,6 +68,7 @@ class GameView(arcade.View):
         self.mouse_pressed = False
         self.ball.x = self.end_x
         self.ball.y = self.end_y
+        
 
 class Circle:
     count = 1
