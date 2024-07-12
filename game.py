@@ -7,7 +7,7 @@ import sympy as sp
 SCREEN_WIDTH = 1280
 SCREEN_HEIGHT = 720
 SCREEN_TITLE = "Ball toss (but with physics)"
-GRAVITY = 9.8  # Gravity constant
+GRAVITY = 9.8*10  # Gravity constant
 
 class GameView(arcade.View):
 
@@ -51,8 +51,8 @@ class GameView(arcade.View):
         self.mouse_pressed = False
         self.mouse_released = True
         # Calculate the initial velocities based on the drag distance
-        self.ball.vx = (self.start_x - x)   # Adjust scaling factor as needed
-        self.ball.vy = (self.start_y - y)   # Adjust scaling factor as needed
+        self.ball.vx = (self.start_x - x)*5   # Adjust scaling factor as needed
+        self.ball.vy = (self.start_y - y)*5   # Adjust scaling factor as needed
 
     def on_mouse_motion(self, x, y, dx, dy):
         if self.mouse_pressed:
@@ -92,7 +92,7 @@ class Circle:
         self.area = 1
         self.rho = 1.15
         self.timestep = 1
-        self.g = 9.81
+        self.g = 9.81*50
         self.vx = 0
         self.vx_new = 0
         self.vy = 0
@@ -100,37 +100,53 @@ class Circle:
         self.ax = 0
         self.ay = 0
         Circle.count += 1
+        self.e = 0.9
 
     def draw(self):
         arcade.draw_circle_filled(self.x, self.y, self.RADIUS, self.color)
         arcade.draw_text(self.name, self.x - 7, self.y - 7, arcade.color.WHITE, font_size=15)
 
     def calculate_x(self, delta_time):
-        var = sp.symbols('var')
+        #var = sp.symbols('var')
         #equation = (-(self.rho * self.area * self.cd * delta_time) / (2 * self.mass)) * (var ** 2) * np.sign(self.vx) - var + self.vx
         #self.vx_new = sp.solve(equation, var)
-        alpha = -(self.rho * self.area * self.cd * delta_time) / (2 * self.mass)
+        alpha = (self.rho * self.area * self.cd * delta_time) / (2 * self.mass) * np.sign(self.vx)
         self.vx_new = [(1 + math.sqrt(1+4*alpha*(self.vx)))/(-2*alpha)]
         self.vx_new.append((1 - math.sqrt(1+4*alpha*(self.vx)))/(-2*alpha))
         self.vx_new = np.asarray(self.vx_new)
         self.vx_new = self.vx_new.flat[np.abs(self.vx_new - self.vx).argmin()]
         self.ax = (self.vx_new - self.vx) / delta_time
-        self.x += self.vx_new * delta_time
-        self.vx = self.vx_new
+        self.x += self.vx_new * delta_time * 2
+        if self.x < 0+self.RADIUS :
+            self.x = 0+self.RADIUS+1
+            self.vx = -self.e*self.vx_new 
+        elif self.x > SCREEN_WIDTH-self.RADIUS-1:
+            self.x = SCREEN_WIDTH-self.RADIUS
+            self.vx = -self.e*self.vx_new
+        else:
+            self.vx = self.vx_new
         
 
     def calculate_y(self, delta_time):
-        var = sp.symbols('var')
+        #var = sp.symbols('var')
         #equation = (-(self.rho * self.area * self.cd * delta_time) / (2 * self.mass)) * (var ** 2) * np.sign(self.vy) - var + self.vy - self.g * delta_time
         #self.vy_new = sp.solve(equation, var)
-        alpha = -(self.rho * self.area * self.cd * delta_time) / (2 * self.mass)
+        alpha = (self.rho * self.area * self.cd * delta_time) / (2 * self.mass) * np.sign(self.vy)
         self.vy_new = [(1 + math.sqrt(1+4*alpha*(self.vy-self.g*delta_time)))/(-2*alpha)]
         self.vy_new.append((1 - math.sqrt(1+4*alpha*(self.vy-self.g*delta_time)))/(-2*alpha))
         self.vy_new = np.asarray(self.vy_new)
         self.vy_new = self.vy_new.flat[np.abs(self.vy_new - self.vy).argmin()]
         self.ay = (self.vy_new - self.vy) / delta_time
-        self.y += self.vy_new * delta_time 
-        self.vy = self.vy_new
+        self.y += self.vy_new * delta_time * 2
+        if self.y < 0+self.RADIUS:
+            self.y = 0+self.RADIUS+1
+            self.vy = -self.e*self.vy_new
+        elif self.y > SCREEN_HEIGHT-self.RADIUS:
+            self.y = SCREEN_HEIGHT-self.RADIUS-1
+            self.vy = -self.e*self.vy_new
+        else:
+            self.vy = self.vy_new
+        
 
 def main():
     window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
