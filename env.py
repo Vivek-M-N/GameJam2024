@@ -33,8 +33,8 @@ class GameView(arcade.View):
         # arcade.draw_lrwh_rectangle_textured(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, (0, 0, 0))
         self.ball.draw()
         if self.mouse_pressed:
-            arcade.draw_line(self.start_x, self.start_y, self.current_x, self.current_y, arcade.color.WHITE)
-            self.draw_trajectory(self.start_x, self.start_y, self.current_x, self.current_y)
+            arcade.draw_line(self.ball.x, self.ball.y, self.current_x, self.current_y, arcade.color.WHITE)
+            self.draw_trajectory(self.ball.x, self.ball.y, self.current_x, self.current_y)
             
         for wall in self.walls:
             arcade.draw_rectangle_filled(wall[0], wall[1], wall[2], wall[3], arcade.color.ALLOY_ORANGE)
