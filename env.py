@@ -11,11 +11,14 @@ class GameView(arcade.View):
         super().__init__()
         self.background = arcade.load_texture("AI Game jam BG.jpg")
         self.bg_scale = self.background.width / SCREEN_WIDTH
+        self.Ball = Circle(SCREEN_WIDTH/2, SCREEN_HEIGHT/2)
         
     def on_draw(self):
         arcade.start_render()
-        arcade.draw_lrwh_rectangle_textured(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, self.background)
-
+        #arcade.draw_lrtb_rectangle_filled(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, [0 0 0])
+        self.Ball.draw()
+        
+        
 class Circle:
     count = 1
 
@@ -24,13 +27,12 @@ class Circle:
         self.y = y
         self.selected = False
         self.color = (255, 0, 0)
-        self.RADIUS = 300
+        self.RADIUS = 30
         self.name = str(Circle.count)
         Circle.count += 1
 
     def draw(self):
-        if self.selected:
-            arcade.draw_circle_outline(self.x, self.y, self.RADIUS, arcade.color.WHITE)
+        #arcade.draw_circle_outline(self.x, self.y, self.RADIUS, arcade.color.WHITE)
         arcade.draw_circle_filled(self.x, self.y, self.RADIUS, self.color)
         arcade.draw_text(self.name, self.x - 7, self.y - 7, arcade.color.WHITE, font_size=15)
 
