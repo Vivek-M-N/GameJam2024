@@ -24,9 +24,9 @@ class GameView(arcade.View):
         wall_height=10
         
         self.walls = [
-            (500, (SCREEN_HEIGHT-wall_width)/2, wall_width+10, wall_height),
-            (500, (SCREEN_HEIGHT)/2, wall_width+10, wall_height),
-            (500, (SCREEN_HEIGHT+wall_width)/2, wall_width+10, wall_height)]
+            (SCREEN_WIDTH-120, SCREEN_HEIGHT/2, wall_width, 100),
+            (SCREEN_WIDTH-70, SCREEN_HEIGHT/2-50, 100, wall_height),
+            (SCREEN_WIDTH-20, SCREEN_HEIGHT/2, wall_width, 100)]
 
     def on_draw(self):
         arcade.start_render()
@@ -44,10 +44,6 @@ class GameView(arcade.View):
         self.start_x = x
         self.start_y = y
 
-    def on_mouse_release(self, x, y, button, modifiers):
-        self.mouse_pressed = False
-        self.ball.x = x
-        self.ball.y = y
 
     def on_mouse_motion(self, x, y, dx, dy):
         if self.mouse_pressed:
@@ -60,13 +56,18 @@ class GameView(arcade.View):
         
         for t in range(1, 100):  # Increase range for a longer trajectory
             t /= 10  # Scale time down
-            new_x = start_x + velocity_x * t
-            new_y = start_y + velocity_y * t - 0.5 * GRAVITY * t ** 2
+            self.end_x = start_x + velocity_x * t
+            self.end_y = start_y + velocity_y * t - 0.5 * GRAVITY * t ** 2
             
-            if new_y < 0:  # Stop if it hits the ground
+            if self.end_y < 0 or self.end_y > SCREEN_HEIGHT or self.end_x < 0 or self.end_x > SCREEN_WIDTH :  # Stop if it hits the ground
                 break
 
-            arcade.draw_circle_filled(new_x, new_y, 2, arcade.color.YELLOW)
+            arcade.draw_circle_filled(self.end_x, self.end_y, 2, arcade.color.YELLOW)
+            
+    def on_mouse_release(self, x, y, button, modifiers):
+        self.mouse_pressed = False
+        self.ball.x = self.end_x
+        self.ball.y = self.end_y
 
 class Circle:
     count = 1
