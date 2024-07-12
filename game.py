@@ -68,6 +68,8 @@ class GameView(arcade.View):
             
     def on_mouse_release(self, x, y, button, modifiers):
         self.mouse_pressed = False
+        
+    def on_update(self, delta_time):
         self.ball.calculate_x()
         self.ball.calculate_y()
                 
@@ -87,7 +89,7 @@ class Circle:
         self.rho = 1.82
         self.force = 50
         self.theta = 20
-        self.timestep = 0.01666
+        self.timestep = 1
         self.g=9.81
         self.vx=0
         self.vx_new=0 
@@ -104,7 +106,7 @@ class Circle:
 
     def calculate_x(self):
         var = sp.symbols('var')
-        equation = ((self.rho*self.area*self.cd*self.timestep)/(2*self.mass))*(var**2) - var + self.vx
+        equation = (-(self.rho*self.area*self.cd*self.timestep)/(2*self.mass))*(var**2) - var + self.vx
         self.vx_new = sp.solve(equation, var)
         self.vx_new = self.vx_new[self.vx_new != 0]
         print(self.vx_new)
@@ -114,7 +116,7 @@ class Circle:
 
     def calculate_y(self):
         var = sp.symbols('var')
-        equation = ((self.rho*self.area*self.cd*self.timestep)/(2*self.mass))*(var**2) - var + self.vy + self.g*self.timestep
+        equation = (-(self.rho*self.area*self.cd*self.timestep)/(2*self.mass))*(var**2) - var + self.vy - self.g*self.timestep
         self.vy_new = sp.solve(equation, var)
         self.vy_new = self.vy_new[self.vy_new != 0]
         print(self.vy_new)
