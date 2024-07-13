@@ -1,27 +1,54 @@
 import arcade
 import numpy as np
 import math
-import sympy as sp
+import os
+import tkinter as tk
+from tkinter import messagebox
+import subprocess
 
 # Constants for the screen size
 SCREEN_WIDTH = 1280
 SCREEN_HEIGHT = 720
 SCREEN_TITLE = "Ball toss (but with physics)"
-GRAVITY = 9.8*50
+GRAVITY = 9.8 * 10  # Gravity constant
 
 WALLS = [
     ((200, 100), (600, 100)),
     ((200, 500), (600, 500)),
     ((100, 150), (100, 450)),
     ((700, 150), (700, 450))
-]
+]   
+
+class MainMenu(arcade.View):
+    def on_show(self):
+        arcade.set_background_color(arcade.color.WHITE)
+
+    def on_draw(self):
+        arcade.start_render()
+        arcade.draw_text("Main Menu", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 50,
+                         arcade.color.BLACK, font_size=30, anchor_x="center")
+        arcade.draw_text("Press P to Play", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2,
+                         arcade.color.BLACK, font_size=20, anchor_x="center")
+        arcade.draw_text("Press E to Experiment", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 50,
+                         arcade.color.BLACK, font_size=20, anchor_x="center")
+
+    def on_key_press(self, key, modifiers):
+        if key == arcade.key.P:
+            game_view = GameView()
+            self.window.show_view(game_view)
+        elif key == arcade.key.E:
+            root = tk.Tk()
+            app = ConfigApp(root)
+            root.mainloop()
+            self.window.show_view(self)
 
 class GameView(arcade.View):
-
     def __init__(self):
         super().__init__()
         self.background = arcade.load_texture("Background.jpg")
         self.bg_scale = self.background.width / SCREEN_WIDTH
+        self.level = 1
+        self.load_level()
         self.ball = Circle(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
         self.mouse_pressed = False
         self.mouse_released = False
@@ -30,25 +57,30 @@ class GameView(arcade.View):
         self.current_x = 0
         self.current_y = 0
 
-        wall_width = 10
-        wall_height = 10
-
-        self.walls = [
-            (SCREEN_WIDTH - 120, SCREEN_HEIGHT / 2, wall_width, 100),
-            (SCREEN_WIDTH - 70, SCREEN_HEIGHT / 2 - 50, 100, wall_height),
-            (SCREEN_WIDTH - 20, SCREEN_HEIGHT / 2, wall_width, 100)]
+    def load_level(self):
+        if self.level == 1:
+            self.walls = [
+                (SCREEN_WIDTH - 120, SCREEN_HEIGHT / 2, 10, 100),
+                (SCREEN_WIDTH - 70, SCREEN_HEIGHT / 2 - 50, 100, 10),
+                (SCREEN_WIDTH - 20, SCREEN_HEIGHT / 2, 10, 100)]
+        elif self.level == 2:
+            self.walls = [
+                (SCREEN_WIDTH - 200, SCREEN_HEIGHT / 2, 10, 200),
+                (SCREEN_WIDTH - 150, SCREEN_HEIGHT / 2 - 100, 200, 10),
+                (SCREEN_WIDTH - 100, SCREEN_HEIGHT / 2, 10, 200)]
+        # Add more levels as needed
 
     def on_draw(self):
         arcade.start_render()
-        arcade.draw_lrwh_rectangle_textured(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT,self.background)
+        arcade.draw_lrwh_rectangle_textured(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, self.background)
         self.ball.draw()
         if self.mouse_pressed:
             arcade.draw_line(self.ball.x, self.ball.y, self.current_x, self.current_y, arcade.color.BLACK)
             self.draw_trajectory(self.ball.x, self.ball.y, self.current_x, self.current_y)
-        
+
         for wall in self.walls:
             arcade.draw_rectangle_filled(wall[0], wall[1], wall[2], wall[3], arcade.color.ALLOY_ORANGE)
-            
+
         for wall in WALLS:
             arcade.draw_line(wall[0][0], wall[0][1], wall[1][0], wall[1][1], arcade.color.BLACK, 2)
 
@@ -61,8 +93,8 @@ class GameView(arcade.View):
         self.mouse_pressed = False
         self.mouse_released = True
         # Calculate the initial velocities based on the drag distance
-        self.ball.vx = (self.start_x - x)*5   # Adjust scaling factor as needed
-        self.ball.vy = (self.start_y - y)*5   # Adjust scaling factor as needed
+        self.ball.vx = (self.start_x - x) * 5  # Adjust scaling factor as needed
+        self.ball.vy = (self.start_y - y) * 5  # Adjust scaling factor as needed
 
     def on_mouse_motion(self, x, y, dx, dy):
         if self.mouse_pressed:
@@ -70,8 +102,8 @@ class GameView(arcade.View):
             self.current_y = y
 
     def draw_trajectory(self, start_x, start_y, current_x, current_y):
-        velocity_x = (start_x - current_x)*5   # Adjust scaling factor as needed
-        velocity_y = (start_y - current_y)*5   # Adjust scaling factor as needed
+        velocity_x = (start_x - current_x)  # Adjust scaling factor as needed
+        velocity_y = (start_y - current_y)  # Adjust scaling factor as needed
 
         for t in range(1, 100):  # Increase range for a longer trajectory
             t /= 10  # Scale time down
@@ -96,12 +128,12 @@ class Circle:
         self.color = (255, 0, 0)
         self.RADIUS = 30
         self.name = str(Circle.count)
-        self.mass = 300  # Arbitrary values for now
-        self.cd = 0.47
-        self.area = 1
-        self.rho = 1.15
+        self.mass = 300  # Default value
+        self.cd = 0.47  # Default value
+        self.area = 1  # Default value
+        self.rho = 1.15  # Default value
         self.timestep = 1
-        self.g = 9.81*50
+        self.g = 9.81 * 50  # Default value
         self.vx = 0
         self.vx_new = 0
         self.vy = 0
@@ -111,10 +143,22 @@ class Circle:
         Circle.count += 1
         self.e = 0.9
 
+        self.load_config()
+
+    def load_config(self):
+        if os.path.exists("config.txt"):
+            with open("config.txt", "r") as file:
+                config = eval(file.read())
+                self.mass = config.get("Mass", self.mass)
+                self.cd = config.get("Drag Coefficient", self.cd)
+                self.area = config.get("Area", self.area)
+                self.rho = config.get("Air Density", self.rho)
+                self.g = config.get("Gravity", self.g)
+
     def draw(self):
         arcade.draw_circle_filled(self.x, self.y, self.RADIUS, self.color)
         arcade.draw_text(self.name, self.x - 7, self.y - 7, arcade.color.WHITE, font_size=15)
-        
+
     def update(self, delta_time):
 
         alpha = (self.rho * self.area * self.cd * delta_time) / (2 * self.mass) * np.sign(self.vx)
@@ -180,14 +224,46 @@ class Circle:
             if min(x1, x2) - self.RADIUS <= self.x <= max(x1, x2) + self.RADIUS and min(y1, y2) - self.RADIUS <= self.y <= max(y1, y2) + self.RADIUS:
                 return True
         return False
-            
-    
-        
+
+class ConfigApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Parameter Configuration")
+        self.parameters = {
+            "Mass": 300,
+            "Drag Coefficient": 0.47,
+            "Area": 1,
+            "Air Density": 1.15,
+            "Gravity": 9.81 * 50
+        }
+        self.sliders = {}
+        self.create_sliders()
+
+    def create_sliders(self):
+        row = 0
+        for key, value in self.parameters.items():
+            label = tk.Label(self.root, text=key)
+            label.grid(row=row, column=0, padx=10, pady=10)
+            slider = tk.Scale(self.root, from_=0, to=value * 2, orient=tk.HORIZONTAL)
+            slider.set(value)
+            slider.grid(row=row, column=1, padx=10, pady=10)
+            self.sliders[key] = slider
+            row += 1
+
+        save_button = tk.Button(self.root, text="Save", command=self.save_config)
+        save_button.grid(row=row, columnspan=2, padx=10, pady=10)
+
+    def save_config(self):
+        config = {key: slider.get() for key, slider in self.sliders.items()}
+        with open("config.txt", "w") as file:
+            file.write(str(config))
+        messagebox.showinfo("Configuration Saved", "Configuration has been saved successfully!")
+        self.root.destroy()
 
 def main():
     window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
-    window.game_view = GameView()
-    window.show_view(window.game_view)
+    main_menu = MainMenu()
+    window.show_view(main_menu)
     arcade.run()
 
 if __name__ == "__main__":
