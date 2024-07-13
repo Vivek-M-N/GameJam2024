@@ -149,11 +149,11 @@ class Circle:
         if os.path.exists("config.txt"):
             with open("config.txt", "r") as file:
                 config = eval(file.read())
-                self.mass = config.get("Mass", self.mass)
-                self.cd = config.get("Drag Coefficient", self.cd)
-                self.area = config.get("Area", self.area)
-                self.rho = config.get("Air Density", self.rho)
-                self.g = config.get("Gravity", self.g)
+                self.mass = config.get("Mass (kg)", self.mass)
+                self.cd = config.get("Drag Coefficient (-)", self.cd)
+                self.area = config.get("Area (m^2)", self.area)
+                self.rho = config.get("Air Density (kg/m^3)", self.rho)
+                self.g = config.get("Acceleration due to gravity (m/s^2)" , self.g)
 
     def draw(self):
         arcade.draw_circle_filled(self.x, self.y, self.RADIUS, self.color)
@@ -230,32 +230,32 @@ class ConfigApp:
         self.root = root
         self.root.title("Parameter Configuration")
         self.display_parameters = {
-            "Mass": 300,
-            "Drag Coefficient": 0.47,
-            "Area": 1,
-            "Air Density": 1.15,
-            "Gravity": 9.81
+            "Mass (kg)": 300,
+            "Drag Coefficient (-)": 0.47,
+            "Area (m^2)": 1,
+            "Air Density (kg/m^3)": 1.15,
+            "Acceleration due to gravity (m/s^2)": 9.81
         }
         self.actual_parameters = {
-            "Mass": 300,
-            "Drag Coefficient": 0.47,
-            "Area": 1,
-            "Air Density": 1.15,
-            "Gravity": 9.81 * 50
+            "Mass (kg)": 300,
+            "Drag Coefficient (-)": 0.47,
+            "Area (m^2)": 1,
+            "Air Density (kg/m^3)": 1.15,
+            "Acceleration due to gravity (m/s^2)": 9.81*50
         }
         self.resolutions = {
-            "Mass": 1,
-            "Drag Coefficient": 0.01,
-            "Area": 0.1,
-            "Air Density": 0.01,
-            "Gravity": 0.01
+            "Mass (kg)": 1,
+            "Drag Coefficient (-)": 0.1,
+            "Area (m^2)": 0.1,
+            "Air Density (kg/m^3)": 0.01,
+            "Acceleration due to gravity (m/s^2)": 0.01
         }
         self.limits = {
-            "Mass": (0.1, 3000),
-            "Drag Coefficient": (0.01, 10),
-            "Area": (0.1, 10),
-            "Air Density": (0.1, 10),
-            "Gravity": (0.1, 10*9.81)
+            "Mass (kg)": (0.1, 3000),
+            "Drag Coefficient (-)": (0.01, 10),
+            "Area (m^2)": (0.1, 10),
+            "Air Density (kg/m^3)": (0.1, 10),
+            "Acceleration due to gravity (m/s^2)": (0.1, 10*9.81)
         }
         self.sliders = {}
         self.create_sliders()
@@ -278,7 +278,7 @@ class ConfigApp:
 
     def save_config(self):
         for key, slider in self.sliders.items():
-            if key == "Gravity":
+            if key == "Acceleration due to gravity (m/s^2)":
                 self.actual_parameters[key] = float(slider.get()) * 50
             else:
                 self.actual_parameters[key] = float(slider.get())
