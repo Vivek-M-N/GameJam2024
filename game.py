@@ -114,9 +114,19 @@ class GameView(arcade.View):
 
             arcade.draw_circle_filled(end_x, end_y, 2, arcade.color.ORANGE)
 
+    
     def on_update(self, delta_time):
         if self.mouse_released:
             self.ball.update(delta_time)
+        if self.ball.x  < SCREEN_WIDTH - 100 and self.ball.x > SCREEN_WIDTH - 300 and self.ball.y < SCREEN_HEIGHT - 100 and self.ball.y > SCREEN_HEIGHT - 300: #change to whatever 
+                self.level += 1
+                print(self.level)
+                if self.level > 2:  # Replace with the total number of levels
+                    self.level = 1  # Restart at the first level
+                self.load_level()
+                self.ball.x=SCREEN_WIDTH / 2
+                self.ball.y=SCREEN_HEIGHT / 2
+                self.mouse_released = False            
             
     def on_key_press(self, key, modifiers):
         """Handle key press events."""
