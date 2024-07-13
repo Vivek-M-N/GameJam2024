@@ -12,11 +12,10 @@ SCREEN_HEIGHT = 720
 SCREEN_TITLE = "Ball toss (but with physics)"
 GRAVITY = 9.8 * 10  # Gravity constant
 
-WALLS = [
-    ((200, 100), (600, 100)),
-    ((200, 500), (600, 500)),
-    ((100, 150), (100, 450)),
-    ((700, 150), (700, 450))
+BASKET = [
+    ((1000, 460), (1000, 260)),
+    ((1000, 260), (1100, 260)),
+    ((1100, 260), (1100, 460))
 ]   
 
 class MainMenu(arcade.View):
@@ -60,9 +59,9 @@ class GameView(arcade.View):
     def load_level(self):
         if self.level == 1:
             self.walls = [
-                (SCREEN_WIDTH - 120, SCREEN_HEIGHT / 2, 10, 100),
-                (SCREEN_WIDTH - 70, SCREEN_HEIGHT / 2 - 50, 100, 10),
-                (SCREEN_WIDTH - 20, SCREEN_HEIGHT / 2, 10, 100)]
+                (SCREEN_WIDTH - 60, SCREEN_HEIGHT / 3, 10, 100),
+                (SCREEN_WIDTH - 50, SCREEN_HEIGHT / 3 - 50, 100, 10),
+                (SCREEN_WIDTH - 20, SCREEN_HEIGHT / 3, 10, 100)]
         elif self.level == 2:
             self.walls = [
                 (SCREEN_WIDTH - 200, SCREEN_HEIGHT / 2, 10, 200),
@@ -81,7 +80,7 @@ class GameView(arcade.View):
         for wall in self.walls:
             arcade.draw_rectangle_filled(wall[0], wall[1], wall[2], wall[3], arcade.color.ALLOY_ORANGE)
 
-        for wall in WALLS:
+        for wall in BASKET:
             arcade.draw_line(wall[0][0], wall[0][1], wall[1][0], wall[1][1], arcade.color.BLACK, 2)
 
     def on_mouse_press(self, x, y, button, modifiers):
@@ -118,6 +117,11 @@ class GameView(arcade.View):
     def on_update(self, delta_time):
         if self.mouse_released:
             self.ball.update(delta_time)
+            
+    def on_key_press(self, key, modifiers):
+        """Handle key press events."""
+        if key == arcade.key.R:
+            self.ball.reset()
 
 class Circle:
     count = 1
@@ -125,6 +129,8 @@ class Circle:
     def __init__(self, x, y):
         self.x = x
         self.y = y
+        self.initial_x = x
+        self.initial_y = y
         self.color = (255, 0, 0)
         self.RADIUS = 30
         self.name = str(Circle.count)
@@ -149,11 +155,11 @@ class Circle:
         if os.path.exists("config.txt"):
             with open("config.txt", "r") as file:
                 config = eval(file.read())
-                self.mass = config.get("Mass (kg)", self.mass)
-                self.cd = config.get("Drag Coefficient (-)", self.cd)
-                self.area = config.get("Area (m^2)", self.area)
-                self.rho = config.get("Air Density (kg/m^3)", self.rho)
-                self.g = config.get("Acceleration due to gravity (m/s^2)" , self.g)
+                self.mass = config.get("Mass", self.mass)
+                self.cd = config.get("Drag Coefficient", self.cd)
+                self.area = config.get("Area", self.area)
+                self.rho = config.get("Air Density", self.rho)
+                self.g = config.get("Gravity", self.g)
 
     def draw(self):
         arcade.draw_circle_filled(self.x, self.y, self.RADIUS, self.color)
@@ -162,10 +168,13 @@ class Circle:
     def update(self, delta_time):
 
         alpha = (self.rho * self.area * self.cd * delta_time) / (2 * self.mass) * np.sign(self.vx)
-        self.vx_new = [(1 + math.sqrt(1+4*alpha*(self.vx)))/(-2*alpha)]
-        self.vx_new.append((1 - math.sqrt(1+4*alpha*(self.vx)))/(-2*alpha))
-        self.vx_new = np.asarray(self.vx_new)
-        self.vx_new = self.vx_new.flat[np.abs(self.vx_new - self.vx).argmin()]
+        if self.vx == 0:
+            self.vx_new = 0
+        else:
+            self.vx_new = [(1 + math.sqrt(1+4*alpha*(self.vx)))/(-2*alpha)]
+            self.vx_new.append((1 - math.sqrt(1+4*alpha*(self.vx)))/(-2*alpha))
+            self.vx_new = np.asarray(self.vx_new)
+            self.vx_new = self.vx_new.flat[np.abs(self.vx_new - self.vx).argmin()]
         self.ax = (self.vx_new - self.vx) / delta_time
         self.x += self.vx_new * delta_time * 2
         
@@ -183,10 +192,13 @@ class Circle:
         #equation = (-(self.rho * self.area * self.cd * delta_time) / (2 * self.mass)) * (var ** 2) * np.sign(self.vy) - var + self.vy - self.g * delta_time
         #self.vy_new = sp.solve(equation, var)
         alpha = (self.rho * self.area * self.cd * delta_time) / (2 * self.mass) * np.sign(self.vy)
-        self.vy_new = [(1 + math.sqrt(1+4*alpha*(self.vy-self.g*delta_time)))/(-2*alpha)]
-        self.vy_new.append((1 - math.sqrt(1+4*alpha*(self.vy-self.g*delta_time)))/(-2*alpha))
-        self.vy_new = np.asarray(self.vy_new)
-        self.vy_new = self.vy_new.flat[np.abs(self.vy_new - self.vy).argmin()]
+        if self.vy == 0:
+            self.vy_new = 0
+        else:
+            self.vy_new = [(1 + math.sqrt(1+4*alpha*(self.vy-self.g*delta_time)))/(-2*alpha)]
+            self.vy_new.append((1 - math.sqrt(1+4*alpha*(self.vy-self.g*delta_time)))/(-2*alpha))
+            self.vy_new = np.asarray(self.vy_new)
+            self.vy_new = self.vy_new.flat[np.abs(self.vy_new - self.vy).argmin()]
         self.ay = (self.vy_new - self.vy) / delta_time
         self.y += self.vy_new * delta_time * 2
         
@@ -199,15 +211,20 @@ class Circle:
         else:
             self.vy = self.vy_new
             
-        for wall in WALLS:
-            if self.collide_with_wall(wall):
+        for wall in BASKET:
+            if self.collide_with_basket(wall):
                 # Reflect ball's speed based on the wall's orientation
                 if wall[0][0] == wall[1][0]:  # Vertical wall
-                    self.vx *= -1
+                    self.vx = -self.vx*0.5
                 else:  # Horizontal wall
-                    self.vy *= -1
+                    self.vy = -self.vy*0.5
                     
-    def collide_with_wall(self, wall):
+        if BASKET[0][0][0]+self.RADIUS < self.x < BASKET[2][0][0]+self.RADIUS and BASKET[1][0][1]+self.RADIUS < self.y < BASKET[1][1][1]+self.RADIUS:
+            self.vx=0
+            self.vy=0
+                    
+                    
+    def collide_with_basket(self, wall):
         """Check if the ball collides with a wall segment."""
         # Wall segment endpoints
         x1, y1 = wall[0]
@@ -219,57 +236,43 @@ class Circle:
         dist = num / den
 
         # Check if the ball is within the RADIUS distance to the wall segment
-        if dist < self.RADIUS:
+        if dist < self.RADIUS+2:
             # Further check if the ball's center is within the wall segment's bounds
-            if min(x1, x2) - self.RADIUS <= self.x <= max(x1, x2) + self.RADIUS and min(y1, y2) - self.RADIUS <= self.y <= max(y1, y2) + self.RADIUS:
+            if min(x1, x2) - self.RADIUS+2 <= self.x <= max(x1, x2) + self.RADIUS-2 and min(y1, y2) - self.RADIUS+2 <= self.y <= max(y1, y2) + self.RADIUS-2:
                 return True
         return False
+    
+    def reset(self):
+        """Reset the ball's position and velocity."""
+        self.x = self.initial_x
+        self.y = self.initial_y
+        self.vx = 0
+        self.vy = 0
+    
+    
 
 class ConfigApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Parameter Configuration")
-        self.display_parameters = {
-            "Mass (kg)": 300,
-            "Drag Coefficient (-)": 0.47,
-            "Area (m^2)": 1,
-            "Air Density (kg/m^3)": 1.15,
-            "Acceleration due to gravity (m/s^2)": 9.81
-        }
-        self.actual_parameters = {
-            "Mass (kg)": 300,
-            "Drag Coefficient (-)": 0.47,
-            "Area (m^2)": 1,
-            "Air Density (kg/m^3)": 1.15,
-            "Acceleration due to gravity (m/s^2)": 9.81*50
-        }
-        self.resolutions = {
-            "Mass (kg)": 1,
-            "Drag Coefficient (-)": 0.1,
-            "Area (m^2)": 0.1,
-            "Air Density (kg/m^3)": 0.01,
-            "Acceleration due to gravity (m/s^2)": 0.01
-        }
-        self.limits = {
-            "Mass (kg)": (0.1, 3000),
-            "Drag Coefficient (-)": (0.01, 10),
-            "Area (m^2)": (0.1, 10),
-            "Air Density (kg/m^3)": (0.1, 10),
-            "Acceleration due to gravity (m/s^2)": (0.1, 10*9.81)
+        self.parameters = {
+            "Mass": 300,
+            "Drag Coefficient": 0.47,
+            "Area": 1,
+            "Air Density": 1.15,
+            "Gravity": 9.81 * 50
         }
         self.sliders = {}
         self.create_sliders()
 
     def create_sliders(self):
         row = 0
-        for key, value in self.display_parameters.items():
+        for key, value in self.parameters.items():
             label = tk.Label(self.root, text=key)
             label.grid(row=row, column=0, padx=10, pady=10)
-            resolution = self.resolutions.get(key, 0.01)
-            lower_limit, upper_limit = self.limits.get(key, (0, value * 2))
-            slider = tk.Scale(self.root, from_=lower_limit, to=upper_limit, orient=tk.HORIZONTAL, resolution=resolution)
+            slider = tk.Scale(self.root, from_= 1, to=value * 2, orient=tk.HORIZONTAL)
             slider.set(value)
-            slider.grid(row=row, column=1, padx=10, pady=10)
+            slider.grid(row=row, column= 1, padx=10, pady=10)
             self.sliders[key] = slider
             row += 1
 
@@ -277,15 +280,9 @@ class ConfigApp:
         save_button.grid(row=row, columnspan=2, padx=10, pady=10)
 
     def save_config(self):
-        for key, slider in self.sliders.items():
-            if key == "Acceleration due to gravity (m/s^2)":
-                self.actual_parameters[key] = float(slider.get()) * 50
-            else:
-                self.actual_parameters[key] = float(slider.get())
-        
+        config = {key: slider.get() for key, slider in self.sliders.items()}
         with open("config.txt", "w") as file:
-            file.write(str(self.actual_parameters))
-        
+            file.write(str(config))
         messagebox.showinfo("Configuration Saved", "Configuration has been saved successfully!")
         self.root.destroy()
 
