@@ -7,7 +7,14 @@ import sympy as sp
 SCREEN_WIDTH = 1280
 SCREEN_HEIGHT = 720
 SCREEN_TITLE = "Ball toss (but with physics)"
-GRAVITY = 9.8*10  # Gravity constant
+GRAVITY = 9.8*50
+
+WALLS = [
+    ((200, 100), (600, 100)),
+    ((200, 500), (600, 500)),
+    ((100, 150), (100, 450)),
+    ((700, 150), (700, 450))
+]
 
 class GameView(arcade.View):
 
@@ -41,6 +48,9 @@ class GameView(arcade.View):
         
         for wall in self.walls:
             arcade.draw_rectangle_filled(wall[0], wall[1], wall[2], wall[3], arcade.color.ALLOY_ORANGE)
+            
+        for wall in WALLS:
+            arcade.draw_line(wall[0][0], wall[0][1], wall[1][0], wall[1][1], arcade.color.BLACK, 2)
 
     def on_mouse_press(self, x, y, button, modifiers):
         self.mouse_pressed = True
@@ -60,8 +70,8 @@ class GameView(arcade.View):
             self.current_y = y
 
     def draw_trajectory(self, start_x, start_y, current_x, current_y):
-        velocity_x = (start_x - current_x)   # Adjust scaling factor as needed
-        velocity_y = (start_y - current_y)   # Adjust scaling factor as needed
+        velocity_x = (start_x - current_x)*5   # Adjust scaling factor as needed
+        velocity_y = (start_y - current_y)*5   # Adjust scaling factor as needed
 
         for t in range(1, 100):  # Increase range for a longer trajectory
             t /= 10  # Scale time down
@@ -75,8 +85,7 @@ class GameView(arcade.View):
 
     def on_update(self, delta_time):
         if self.mouse_released:
-            self.ball.calculate_x(delta_time)
-            self.ball.calculate_y(delta_time)
+            self.ball.update(delta_time)
 
 class Circle:
     count = 1
@@ -105,11 +114,9 @@ class Circle:
     def draw(self):
         arcade.draw_circle_filled(self.x, self.y, self.RADIUS, self.color)
         arcade.draw_text(self.name, self.x - 7, self.y - 7, arcade.color.WHITE, font_size=15)
+        
+    def update(self, delta_time):
 
-    def calculate_x(self, delta_time):
-        #var = sp.symbols('var')
-        #equation = (-(self.rho * self.area * self.cd * delta_time) / (2 * self.mass)) * (var ** 2) * np.sign(self.vx) - var + self.vx
-        #self.vx_new = sp.solve(equation, var)
         alpha = (self.rho * self.area * self.cd * delta_time) / (2 * self.mass) * np.sign(self.vx)
         self.vx_new = [(1 + math.sqrt(1+4*alpha*(self.vx)))/(-2*alpha)]
         self.vx_new.append((1 - math.sqrt(1+4*alpha*(self.vx)))/(-2*alpha))
@@ -117,6 +124,7 @@ class Circle:
         self.vx_new = self.vx_new.flat[np.abs(self.vx_new - self.vx).argmin()]
         self.ax = (self.vx_new - self.vx) / delta_time
         self.x += self.vx_new * delta_time * 2
+        
         if self.x < 0+self.RADIUS :
             self.x = 0+self.RADIUS+1
             self.vx = -self.e*self.vx_new 
@@ -125,9 +133,8 @@ class Circle:
             self.vx = -self.e*self.vx_new
         else:
             self.vx = self.vx_new
-        
-
-    def calculate_y(self, delta_time):
+          
+            
         #var = sp.symbols('var')
         #equation = (-(self.rho * self.area * self.cd * delta_time) / (2 * self.mass)) * (var ** 2) * np.sign(self.vy) - var + self.vy - self.g * delta_time
         #self.vy_new = sp.solve(equation, var)
@@ -138,6 +145,7 @@ class Circle:
         self.vy_new = self.vy_new.flat[np.abs(self.vy_new - self.vy).argmin()]
         self.ay = (self.vy_new - self.vy) / delta_time
         self.y += self.vy_new * delta_time * 2
+        
         if self.y < 0+self.RADIUS:
             self.y = 0+self.RADIUS+1
             self.vy = -self.e*self.vy_new
@@ -146,6 +154,34 @@ class Circle:
             self.vy = -self.e*self.vy_new
         else:
             self.vy = self.vy_new
+            
+        for wall in WALLS:
+            if self.collide_with_wall(wall):
+                # Reflect ball's speed based on the wall's orientation
+                if wall[0][0] == wall[1][0]:  # Vertical wall
+                    self.vx *= -1
+                else:  # Horizontal wall
+                    self.vy *= -1
+                    
+    def collide_with_wall(self, wall):
+        """Check if the ball collides with a wall segment."""
+        # Wall segment endpoints
+        x1, y1 = wall[0]
+        x2, y2 = wall[1]
+
+        # Line segment formula to find the distance from the ball to the wall
+        num = abs((y2 - y1) * self.x - (x2 - x1) * self.y + x2 * y1 - y2 * x1)
+        den = ((y2 - y1) ** 2 + (x2 - x1) ** 2) ** 0.5
+        dist = num / den
+
+        # Check if the ball is within the RADIUS distance to the wall segment
+        if dist < self.RADIUS:
+            # Further check if the ball's center is within the wall segment's bounds
+            if min(x1, x2) - self.RADIUS <= self.x <= max(x1, x2) + self.RADIUS and min(y1, y2) - self.RADIUS <= self.y <= max(y1, y2) + self.RADIUS:
+                return True
+        return False
+            
+    
         
 
 def main():
