@@ -229,22 +229,45 @@ class ConfigApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Parameter Configuration")
-        self.parameters = {
+        self.display_parameters = {
+            "Mass": 300,
+            "Drag Coefficient": 0.47,
+            "Area": 1,
+            "Air Density": 1.15,
+            "Gravity": 9.81
+        }
+        self.actual_parameters = {
             "Mass": 300,
             "Drag Coefficient": 0.47,
             "Area": 1,
             "Air Density": 1.15,
             "Gravity": 9.81 * 50
         }
+        self.resolutions = {
+            "Mass": 1,
+            "Drag Coefficient": 0.01,
+            "Area": 0.1,
+            "Air Density": 0.01,
+            "Gravity": 0.01
+        }
+        self.limits = {
+            "Mass": (0.1, 3000),
+            "Drag Coefficient": (0.01, 10),
+            "Area": (0.1, 10),
+            "Air Density": (0.1, 10),
+            "Gravity": (0.1, 10*9.81)
+        }
         self.sliders = {}
         self.create_sliders()
 
     def create_sliders(self):
         row = 0
-        for key, value in self.parameters.items():
+        for key, value in self.display_parameters.items():
             label = tk.Label(self.root, text=key)
             label.grid(row=row, column=0, padx=10, pady=10)
-            slider = tk.Scale(self.root, from_=0, to=value * 2, orient=tk.HORIZONTAL)
+            resolution = self.resolutions.get(key, 0.01)
+            lower_limit, upper_limit = self.limits.get(key, (0, value * 2))
+            slider = tk.Scale(self.root, from_=lower_limit, to=upper_limit, orient=tk.HORIZONTAL, resolution=resolution)
             slider.set(value)
             slider.grid(row=row, column=1, padx=10, pady=10)
             self.sliders[key] = slider
@@ -254,9 +277,15 @@ class ConfigApp:
         save_button.grid(row=row, columnspan=2, padx=10, pady=10)
 
     def save_config(self):
-        config = {key: slider.get() for key, slider in self.sliders.items()}
+        for key, slider in self.sliders.items():
+            if key == "Gravity":
+                self.actual_parameters[key] = float(slider.get()) * 50
+            else:
+                self.actual_parameters[key] = float(slider.get())
+        
         with open("config.txt", "w") as file:
-            file.write(str(config))
+            file.write(str(self.actual_parameters))
+        
         messagebox.showinfo("Configuration Saved", "Configuration has been saved successfully!")
         self.root.destroy()
 
