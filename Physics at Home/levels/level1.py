@@ -110,6 +110,11 @@ class Level1(arcade.View):
         for surface in self.slanted_surfaces:
             if self.check_slanted_surface_collision(surface):
                 self.reflect_from_slanted_surface(surface)
+            if self.check_slanted_surface_corner(surface):
+                self.ball.vx *= -self.ball.e
+                self.ball.vy *= -self.ball.e
+                self.ball.x += self.ball.vx*0.01
+                self.ball.y += self.ball.vy*0.01
 
         if self.check_curved_surface_collision():
             self.reflect_from_curved_surface()
@@ -117,6 +122,11 @@ class Level1(arcade.View):
         for line in self.hoop_lines:
             if self.check_slanted_surface_collision(line):
                 self.reflect_from_slanted_surface(line)
+            if self.check_slanted_surface_corner(line):
+                self.ball.vx *= -self.ball.e
+                self.ball.vy *= -self.ball.e
+                self.ball.x += self.ball.vx*0.01
+                self.ball.y += self.ball.vy*0.01
 
     def on_key_press(self, key, modifiers):
         if key == arcade.key.R:
@@ -135,6 +145,7 @@ class Level1(arcade.View):
     def check_slanted_surface_collision(self, surface):
         surface_start, surface_end = surface
         ball_to_surface_start = np.array([self.ball.x - surface_start[0], self.ball.y - surface_start[1]])
+        ball_to_surface_end = np.array([self.ball.x - surface_end[0], self.ball.y - surface_end[1]])
         surface_vector = np.array([surface_end[0] - surface_start[0], surface_end[1] - surface_start[1]])
         surface_length = np.linalg.norm(surface_vector)
         surface_unit_vector = surface_vector / surface_length
@@ -143,6 +154,15 @@ class Level1(arcade.View):
             closest_point = surface_start + projection_length * surface_unit_vector
             distance_to_surface = np.linalg.norm(np.array([self.ball.x, self.ball.y]) - closest_point)
             return distance_to_surface < self.ball.RADIUS
+        return False
+    
+    def check_slanted_surface_corner(self,surface):
+        surface_start, surface_end = surface
+        ball_to_surface_start = np.array([self.ball.x - surface_start[0], self.ball.y - surface_start[1]])
+        ball_to_surface_end = np.array([self.ball.x - surface_end[0], self.ball.y - surface_end[1]])
+        #print(math.sqrt(ball_to_surface_start[0]**2+ball_to_surface_start[1]**2))
+        if math.sqrt(ball_to_surface_start[0]**2+ball_to_surface_start[1]**2) < self.ball.RADIUS+5 or math.sqrt(ball_to_surface_end[0]**2+ball_to_surface_end[1]**2) < self.ball.RADIUS+5:
+            return True
         return False
 
     def reflect_from_slanted_surface(self, surface):
