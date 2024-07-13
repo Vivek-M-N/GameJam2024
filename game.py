@@ -12,13 +12,9 @@ SCREEN_HEIGHT = 720
 SCREEN_TITLE = "Ball toss (but with physics)"
 GRAVITY = 9.8 * 10  # Gravity constant
 
-WALLS = [
-    ((1000, 360), (1000, 260)),
-    ((1000, 260), (1100, 260)),
-    ((1100, 260), (1100, 460))
-]  
 
 class MainMenu(arcade.View):
+
     def on_show(self):
         arcade.set_background_color(arcade.color.WHITE)
 
@@ -42,6 +38,8 @@ class MainMenu(arcade.View):
             self.window.show_view(self)
 
 class GameView(arcade.View):
+
+    #INIT
     def __init__(self):
         super().__init__()
         self.background = arcade.load_texture("Background.jpg")
@@ -70,6 +68,27 @@ class GameView(arcade.View):
                 (SCREEN_WIDTH - 150, SCREEN_HEIGHT / 2 - 100, 200, 10),
                 (SCREEN_WIDTH - 100, SCREEN_HEIGHT / 2, 10, 200)]
             self.target_zone = ((1000+self.ball.RADIUS,260+self.ball.RADIUS),(1100-self.ball.RADIUS,460-self.ball.RADIUS*2.5))
+        
+        self.slanted_surfaces = [
+            ((200, 200), (400, 400)),  # Example coordinates
+            ((500, 100), (700, 300)),
+            ((300, 400), (600, 500)),
+            ((100, 600), (300, 700)),
+        ]
+
+        self.curved_surface = {
+            'center': (800, 400),
+            'radius': 100,
+            'start_angle': 0,
+            'end_angle': 180
+        }
+
+        # Lines around the hoop
+        self.hoop_lines = [
+            ((1000, 260), (1000, 360)),  # Left line
+            ((1000, 260), (1100, 260)),  # Bottom line
+            ((1100, 260), (1100, 460)),  # Right line
+        ]
 
     def on_draw(self):
         arcade.start_render()
@@ -77,14 +96,29 @@ class GameView(arcade.View):
         self.ball.draw()
         if self.mouse_pressed:
             arcade.draw_line(self.ball.x, self.ball.y, self.current_x, self.current_y, arcade.color.BLACK)
-            self.draw_trajectory(self.ball.x, self.ball.y, self.current_x, self.current_y)
 
-        arcade.draw_text(f"Level {self.level}", SCREEN_WIDTH*0.025, SCREEN_HEIGHT - 69, arcade.color.BLACK, 20)
+        arcade.draw_text(f"Level {self.level}", SCREEN_WIDTH * 0.025, SCREEN_HEIGHT - 69, arcade.color.BLACK, 20)
 
         # Draw the hoop images instead of walls
         arcade.draw_texture_rectangle(1050, 360, 100, 200, self.hoop_texture)
-        for wall in WALLS:
-            arcade.draw_line(wall[0][0], wall[0][1], wall[1][0], wall[1][1], arcade.color.BLACK, 2)
+        
+        for surface in self.slanted_surfaces:
+            arcade.draw_line(surface[0][0], surface[0][1], surface[1][0], surface[1][1], arcade.color.RED, 5)
+
+        arcade.draw_arc_outline(
+            self.curved_surface['center'][0],
+            self.curved_surface['center'][1],
+            self.curved_surface['radius'] * 2,
+            self.curved_surface['radius'] * 2,
+            arcade.color.RED,
+            self.curved_surface['start_angle'],
+            self.curved_surface['end_angle'],
+            5
+        )
+
+        # Draw hoop lines
+        for line in self.hoop_lines:
+            arcade.draw_line(line[0][0], line[0][1], line[1][0], line[1][1], arcade.color.BLACK, 3)
 
     def on_mouse_press(self, x, y, button, modifiers):
         self.mouse_pressed = True
@@ -94,28 +128,13 @@ class GameView(arcade.View):
     def on_mouse_release(self, x, y, button, modifiers):
         self.mouse_pressed = False
         self.mouse_released = True
-        # Calculate the initial velocities based on the drag distance
-        self.ball.vx = (self.start_x - x) * 5  # Adjust scaling factor as needed
-        self.ball.vy = (self.start_y - y) * 5  # Adjust scaling factor as needed
+        self.ball.vx = (self.start_x - x) * 5
+        self.ball.vy = (self.start_y - y) * 5
 
     def on_mouse_motion(self, x, y, dx, dy):
         if self.mouse_pressed:
             self.current_x = x
             self.current_y = y
-
-    def draw_trajectory(self, start_x, start_y, current_x, current_y):
-        velocity_x = (start_x - current_x)/1.5  # Adjust scaling factor as needed
-        velocity_y = (start_y - current_y)/1.5  # Adjust scaling factor as needed
-
-        for t in range(1, 100):  # Increase range for a longer trajectory
-            t /= 10  # Scale time down
-            end_x = start_x + velocity_x * t
-            end_y = start_y + velocity_y * t - 0.5 * GRAVITY * t ** 2
-
-            if end_y < self.ball.RADIUS or end_y > SCREEN_HEIGHT - self.ball.RADIUS or end_x < self.ball.RADIUS or end_x > SCREEN_WIDTH - self.ball.RADIUS:  # Stop if it hits the ground
-                break
-
-            arcade.draw_circle_filled(end_x, end_y, 2, arcade.color.ORANGE)
 
     def on_update(self, delta_time):
         if self.mouse_released:
@@ -123,8 +142,18 @@ class GameView(arcade.View):
             if self.ball_in_target_zone():
                 self.level_up()
 
+        for surface in self.slanted_surfaces:
+            if self.check_slanted_surface_collision(surface):
+                self.reflect_from_slanted_surface(surface)
+
+        if self.check_curved_surface_collision():
+            self.reflect_from_curved_surface()
+
+        for line in self.hoop_lines:
+            if self.check_slanted_surface_collision(line):
+                self.reflect_from_slanted_surface(line)
+
     def on_key_press(self, key, modifiers):
-        """Handle key press events."""
         if key == arcade.key.R:
             self.ball.reset()
 
@@ -132,13 +161,57 @@ class GameView(arcade.View):
         return self.target_zone[0][0] < self.ball.x < self.target_zone[1][0] and self.target_zone[0][1] < self.ball.y < self.target_zone[1][1]
 
     def level_up(self):
-        if self.level < 2:  # Adjust this condition based on the number of levels available
+        if self.level < 2:
             self.level += 1
-            self.ball = Circle(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)  # Reset ball position
+            self.ball = Circle(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
         else:
-            # No more levels, close the game or show a message
             messagebox.showinfo("Congratulations", "You have completed all levels!")
             arcade.close_window()
+
+    def check_slanted_surface_collision(self, surface):
+        surface_start, surface_end = surface
+        ball_to_surface_start = np.array([self.ball.x - surface_start[0], self.ball.y - surface_start[1]])
+        surface_vector = np.array([surface_end[0] - surface_start[0], surface_end[1] - surface_start[1]])
+        surface_length = np.linalg.norm(surface_vector)
+        surface_unit_vector = surface_vector / surface_length
+        projection_length = np.dot(ball_to_surface_start, surface_unit_vector)
+        if 0 <= projection_length <= surface_length:
+            closest_point = surface_start + projection_length * surface_unit_vector
+            distance_to_surface = np.linalg.norm(np.array([self.ball.x, self.ball.y]) - closest_point)
+            return distance_to_surface < self.ball.RADIUS
+        return False
+
+    def reflect_from_slanted_surface(self, surface):
+        surface_start, surface_end = surface
+        surface_vector = np.array([surface_end[0] - surface_start[0], surface_end[1] - surface_start[1]])
+        surface_normal = np.array([-surface_vector[1], surface_vector[0]], dtype=float)
+        surface_normal /= np.linalg.norm(surface_normal)
+        velocity_vector = np.array([self.ball.vx, self.ball.vy])
+        reflected_velocity = velocity_vector - 2 * np.dot(velocity_vector, surface_normal) * surface_normal
+        self.ball.vx, self.ball.vy = reflected_velocity * self.ball.e
+        self.ball.x += self.ball.vx * 0.01
+        self.ball.y += self.ball.vy * 0.01
+
+    def check_curved_surface_collision(self):
+        center = self.curved_surface['center']
+        radius = self.curved_surface['radius']
+        ball_to_center = np.array([self.ball.x - center[0], self.ball.y - center[1]])
+        distance_to_center = np.linalg.norm(ball_to_center)
+        if abs(distance_to_center - radius) < self.ball.RADIUS:
+            angle = math.degrees(math.atan2(ball_to_center[1], ball_to_center[0]))
+            if self.curved_surface['start_angle'] <= angle <= self.curved_surface['end_angle']:
+                return True
+        return False
+
+    def reflect_from_curved_surface(self):
+        center = self.curved_surface['center']
+        ball_to_center = np.array([self.ball.x - center[0], self.ball.y - center[1]])
+        surface_normal = ball_to_center / np.linalg.norm(ball_to_center)
+        velocity_vector = np.array([self.ball.vx, self.ball.vy])
+        reflected_velocity = velocity_vector - 2 * np.dot(velocity_vector, surface_normal) * surface_normal
+        self.ball.vx, self.ball.vy = reflected_velocity * self.ball.e
+        self.ball.x += self.ball.vx * 0.01
+        self.ball.y += self.ball.vy * 0.01
 
 class Circle:
     count = 1
@@ -151,12 +224,12 @@ class Circle:
         self.color = (255, 255, 255)
         self.RADIUS = 30
         self.name = str(Circle.count)
-        self.mass = 300  # Default value
-        self.cd = 0.47  # Default value
-        self.area = 1  # Default value
-        self.rho = 1.15  # Default value
+        self.mass = 300
+        self.cd = 0.47
+        self.area = 1
+        self.rho = 1.15
         self.timestep = 1
-        self.g = 9.81 * 50  # Default value
+        self.g = 9.81 * 50
         self.vx = 0
         self.vx_new = 0
         self.vy = 0
@@ -178,14 +251,13 @@ class Circle:
                 self.cd = config.get("Drag Coefficient (-)", self.cd)
                 self.area = config.get("Area (m^2)", self.area)
                 self.rho = config.get("Air Density (kg/m^3)", self.rho)
-                self.g = config.get("Acceleration due to gravity (m/s^2)" , self.g)
+                self.g = config.get("Acceleration due to gravity (m/s^2)", self.g)
 
     def draw(self):
-        # arcade.draw_circle_filled(self.x, self.y, self.RADIUS, self.color)
+        arcade.draw_circle_filled(self.x, self.y, self.RADIUS, self.color)
         arcade.draw_texture_rectangle(self.x, self.y, self.RADIUS * 2, self.RADIUS * 2, self.texture)
 
     def update(self, delta_time):
-
         alpha = (self.rho * self.area * self.cd * delta_time) / (2 * self.mass) * np.sign(self.vx)
         if self.vx == 0:
             self.vx_new = 0
@@ -206,11 +278,6 @@ class Circle:
         else:
             self.vx = self.vx_new
           
-            
-        #var = sp.symbols('var')
-        #equation = (-(self.rho * self.area * self.cd * delta_time) / (2 * self.mass)) * (var ** 2) * np.sign(self.vy) - var + self.vy - self.g * delta_time
-        #self.vy_new = sp.solve(equation, var)
-        alpha = (self.rho * self.area * self.cd * delta_time) / (2 * self.mass) * np.sign(self.vy)
         alpha = (self.rho * self.area * self.cd * delta_time) / (2 * self.mass) * np.sign(self.vy)
         if self.vy == 0:
             self.vy_new = 0
@@ -230,50 +297,14 @@ class Circle:
             self.vy = -self.e*self.vy_new
         else:
             self.vy = self.vy_new
-        self.ay = (self.vy_new - self.vy) / delta_time
-        self.y += self.vy_new * delta_time
-        
-        if self.y < 0+self.RADIUS:
-            self.y = 0+self.RADIUS+1
-            self.vy = -self.e*self.vy_new
-        elif self.y > SCREEN_HEIGHT-self.RADIUS:
-            self.y = SCREEN_HEIGHT-self.RADIUS-1
-            self.vy = -self.e*self.vy_new
-        else:
-            self.vy = self.vy_new
-            
-        for wall in WALLS:
-            if self.collide_with_wall(wall):
-                # Reflect ball's speed based on the wall's orientation
-                if wall[0][0] == wall[1][0]:  # Vertical wall
-                    self.vx *= -self.e
-                else:  # Horizontal wall
-                    self.vy *= -self.e
-                    
-    def collide_with_wall(self, wall):
-        """Check if the ball collides with a wall segment."""
-        # Wall segment endpoints
-        x1, y1 = wall[0]
-        x2, y2 = wall[1]
 
-        # Line segment formula to find the distance from the ball to the wall
-        num = abs((y2 - y1) * self.x - (x2 - x1) * self.y + x2 * y1 - y2 * x1)
-        den = ((y2 - y1) ** 2 + (x2 - x1) ** 2) ** 0.5
-        dist = num / den
-
-        # Check if the ball is within the RADIUS distance to the wall segment
-        if dist < self.RADIUS:
-            # Further check if the ball's center is within the wall segment's bounds
-            if min(x1, x2) - self.RADIUS <= self.x <= max(x1, x2) + self.RADIUS and min(y1, y2) - self.y <= self.y <= max(y1, y2) + self.RADIUS:
-                return True
-        return False
-    
     def reset(self):
-        """Reset the ball's position and velocity."""
         self.x = self.initial_x
         self.y = self.initial_y
         self.vx = 0
         self.vy = 0
+
+
 
 class ConfigApp:
     def __init__(self, root):
