@@ -31,7 +31,7 @@ class ConfigApp:
             "Drag Coefficient (-)": (0.01, 10),
             "Area (m^2)": (0.1, 10),
             "Air Density (kg/m^3)": (0.1, 10),
-            "Coefficient Of Restitution (-)": (0.2, 1)
+            "Coefficient Of Restitution (-)": (0.2, 0.9)
         }
         self.sliders = {}
         self.create_sliders()
