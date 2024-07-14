@@ -1,0 +1,156 @@
+SCREEN_WIDTH = 1280
+SCREEN_HEIGHT = 720
+
+level 1------------------------------------------------------------------------------------------------ plain
+
+    self.ball = Circle(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
+
+ self.slanted_surfaces = [
+            # ((200, 200), (400, 400)),  # Example coordinates
+            # ((500, 100), (700, 300)),
+            ((740, 360), (1000, 360)),
+            ((100, 600), (300, 700)),
+        ]
+
+        self.curved_surface = {
+            'center': (600, 300),
+            'radius': 150,
+            'start_angle': 25,
+            'end_angle': 180
+        }
+
+        # Lines around the hoop
+        self.hoop_lines = [
+            ((1000, 260), (1000, 360)),  # Left line
+            ((1000, 260), (1100, 260)),  # Bottom line
+            ((1100, 260), (1100, 460)),  # Right line
+        ]
+
+
+        # Draw the hoop images instead of walls
+        arcade.draw_texture_rectangle(1050, 360, 100, 200, self.hoop_texture)
+
+if self.level == 1:
+            self.walls = [
+                (SCREEN_WIDTH - 120, SCREEN_HEIGHT / 2, 10, 100),
+                (SCREEN_WIDTH - 70, SCREEN_HEIGHT / 2 - 50, 100, 10),
+                (SCREEN_WIDTH - 20, SCREEN_HEIGHT / 2, 10, 100)]
+            self.target_zone = ((1000+self.ball.RADIUS,260+self.ball.RADIUS),(1100-self.ball.RADIUS,460-self.ball.RADIUS*3))
+
+
+
+level 2 ------------------------------------------------------------------------ fans
+
+self.ball = Circle(150, SCREEN_HEIGHT *2/ 3)
+
+self.slanted_surfaces = [
+            # ((200, 200), (400, 400)),  # Example coordinates
+            # ((500, 100), (700, 300)),
+            ((400, 360), (400, 700)),
+            ((10, 700), (400, 700)),
+        ]
+
+        # self.curved_surface = {
+        #     'center': (600, 300),
+        #     'radius': 150,
+        #     'start_angle': 25,
+        #     'end_angle': 180
+        # }
+
+        # Lines around the hoop
+        self.hoop_lines = [
+            ((1100, 260), (1100, 360)),  # Left line
+            ((1100, 260), (1200, 260)),  # Bottom line
+            ((1200, 260), (1200, 460)),  # Right line
+        ]
+
+# Comment out all curved surfaces
+
+        if self.level == 1:
+            self.walls = [
+                (SCREEN_WIDTH - 120, SCREEN_HEIGHT / 2, 10, 100),
+                (SCREEN_WIDTH - 70, SCREEN_HEIGHT / 2 - 50, 100, 10),
+                (SCREEN_WIDTH - 20, SCREEN_HEIGHT / 2, 10, 100)]
+            self.target_zone = ((1100+self.ball.RADIUS,260+self.ball.RADIUS),(1200-self.ball.RADIUS,460-self.ball.RADIUS*2.5))
+
+
+level 3 ------------------------------------------------------------------------ tunnel
+
+        self.ball = Circle(225, 200)
+
+ if self.level == 1:
+            self.walls = [
+                (SCREEN_WIDTH - 120, SCREEN_HEIGHT / 2, 10, 100),
+                (SCREEN_WIDTH - 70, SCREEN_HEIGHT / 2 - 50, 100, 10),
+                (SCREEN_WIDTH - 20, SCREEN_HEIGHT / 2, 10, 100)]
+            self.target_zone = ((1100+self.ball.RADIUS,260+self.ball.RADIUS),(1200-self.ball.RADIUS,460-self.ball.RADIUS*2.5))
+     
+        
+        self.slanted_surfaces = [
+            ((150, 200), (150, 555)),  # Example coordinates
+            ((300, 50), (300, 555)),
+            ((150, 550), (270, 670)),
+            ((270, 670), (650, 670)),
+            ((300, 550), (650, 550)),
+            ((800, 460), (1200, 460)),
+            ((700, 360), (1100, 360)),
+        ]
+
+    # self.curved_surface = {
+        #     'center': (600, 300),
+        #     'radius': 150,
+        #     'start_angle': 25,
+        #     'end_angle': 180
+        # }
+
+        # Lines around the hoop
+        self.hoop_lines = [
+            ((1100, 260), (1100, 360)),  # Left line
+            ((1100, 260), (1200, 260)),  # Bottom line
+            ((1200, 260), (1200, 460)),  # Right line
+        ]
+
+
+level 4.1 ------------------------------------------------------------------------ combined arc
+
+
+ self.slanted_surfaces = [
+            ((150, 50), (150, 550)),  # Example coordinates
+            ((300, 50), (300, 550)),
+            ((300, 150), (525, 150)),
+            ((450, 600), (450, 300)),
+            ((450, 600), (1000, 720)),
+            ((525, 150), (900, 400)),
+            ((900, 400), (1100, 360)),
+        ]
+
+        self.curved_surface = {
+            'center': (300, 550),
+            'radius': 150,
+            'start_angle': 180,
+            'end_angle': 0
+        },
+
+# Fan to be placed from x=500 to x=1000/950
+
+level 4.2 ------------------------------------------------------------------------ combined tunnel
+
+self.slanted_surfaces = [
+            ((150, 50), (150, 700)),  # Example coordinates
+            ((300, 50), (300, 550)),
+            ((150, 700), (450, 700)),
+            ((450, 700), (450, 250)),
+            ((300, 50), (600, 50)),
+            ((600, 50), (600, 550)),
+            ((600, 550), (1100, 360)),
+            ((450, 700), (600, 700)),
+            ((600, 700), (1100, 460)),
+            ((1100, 460), (1200, 460)),
+        ]
+
+    # self.curved_surface = {
+        #     'center': (600, 300),
+        #     'radius': 150,
+        #     'start_angle': 25,
+        #     'end_angle': 180
+        # }
