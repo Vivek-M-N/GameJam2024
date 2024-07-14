@@ -9,7 +9,7 @@ SCREEN_HEIGHT = 720
 class Circle:
     count = 1
 
-    def __init__(self, x, y, windx, windy):
+    def __init__(self, x, y, windx, windy, level):
         self.x = x
         self.y = y
         self.initial_x = x
@@ -33,6 +33,7 @@ class Circle:
         self.e = 0.9
         self.windx = windx
         self.windy = windy
+        self.level=level
 
         self.texture = arcade.load_texture("assets/ball.png")
 
@@ -53,6 +54,10 @@ class Circle:
         arcade.draw_texture_rectangle(self.x, self.y, self.RADIUS * 2, self.RADIUS * 2, self.texture)
 
     def update(self, delta_time):
+        if self.level ==2:
+            if 200 < x < 400: 
+                self.windy=1000
+        
         alpha = (self.rho * self.area * self.cd * delta_time) / (2 * self.mass) * np.sign(self.vx)
         b = -1-(self.rho * self.area * self.cd * delta_time * self.windx) / (self.mass) * np.sign(self.vx)
         c = self.vx-(self.rho * self.area * self.cd * delta_time * self.windx**2) / (2 * self.mass) * np.sign(self.vx)
