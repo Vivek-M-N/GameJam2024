@@ -1,8 +1,10 @@
 import arcade
-from circle import Circle
+import tkinter as tk
 import numpy as np
 import math
 from tkinter import messagebox
+from circle import Circle
+from config_app import ConfigApp
 
 SCREEN_WIDTH = 1280
 SCREEN_HEIGHT = 720
@@ -25,32 +27,31 @@ class Level2(arcade.View):
         self.current_x = 0
         self.current_y = 0
 
-        self.ball = Circle(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, self.windx, self.windy)
+        self.ball = Circle(150, SCREEN_HEIGHT *2/ 3, self.windx, self.windy, 2)
 
-        self.target_zone = ((1000+self.ball.RADIUS,260+self.ball.RADIUS),(1200-self.ball.RADIUS,460-self.ball.RADIUS*2.5))
+        self.target_zone = ((1100,260+self.ball.RADIUS),(1200,460-self.ball.RADIUS*2.5))
 
         # Load the hoop texture
         self.hoop_texture = arcade.load_texture("assets/hoop.png")
+        self.fan_texture = arcade.load_texture("assets/fan.png")
         
         self.slanted_surfaces = [
-            ((200, 200), (400, 400)),  # Example coordinates
-            ((500, 100), (700, 300)),
-            ((300, 400), (600, 500)),
-            ((100, 600), (300, 700)),
+            ((400, 360), (400, 700)),
+            ((10, 700), (400, 700)),
         ]
 
-        self.curved_surface = {
-            'center': (800, 400),
-            'radius': 100,
-            'start_angle': 0,
-            'end_angle': 180
-        }
+        # self.curved_surface = {
+        #     'center': (800, 400),
+        #     'radius': 100,
+        #     'start_angle': 0,
+        #     'end_angle': 180
+        # }
 
         # Lines around the hoop
         self.hoop_lines = [
-            ((1000, 260), (1000, 360)),  # Left line
-            ((1000, 260), (1100, 260)),  # Bottom line
-            ((1100, 260), (1100, 460)),  # Right line
+            ((1100, 260), (1100, 360)),  # Left line
+            ((1100, 260), (1200, 260)),  # Bottom line
+            ((1200, 260), (1200, 460)),  # Right line
         ]
 
     def on_draw(self):
@@ -63,25 +64,26 @@ class Level2(arcade.View):
         arcade.draw_text(f"Level {self.level}", SCREEN_WIDTH * 0.025, SCREEN_HEIGHT - 69, arcade.color.BLACK, 20)
 
         # Draw the hoop images instead of walls
-        arcade.draw_texture_rectangle(1050, 360, 100, 200, self.hoop_texture)
+        arcade.draw_texture_rectangle(1150, 360, 200, 200, self.hoop_texture)
+        arcade.draw_texture_rectangle(525, 670, 100, 100, self.fan_texture)
         
         for surface in self.slanted_surfaces:
             arcade.draw_line(surface[0][0], surface[0][1], surface[1][0], surface[1][1], arcade.color.RED, 5)
 
-        arcade.draw_arc_outline(
-            self.curved_surface['center'][0],
-            self.curved_surface['center'][1],
-            self.curved_surface['radius'] * 2,
-            self.curved_surface['radius'] * 2,
-            arcade.color.RED,
-            self.curved_surface['start_angle'],
-            self.curved_surface['end_angle'],
-            5
-        )
+        # arcade.draw_arc_outline(
+        #     self.curved_surface['center'][0],
+        #     self.curved_surface['center'][1],
+        #     self.curved_surface['radius'] * 2,
+        #     self.curved_surface['radius'] * 2,
+        #     arcade.color.RED,
+        #     self.curved_surface['start_angle'],
+        #     self.curved_surface['end_angle'],
+        #     5
+        # )
 
         # Draw hoop lines
-        for line in self.hoop_lines:
-            arcade.draw_line(line[0][0], line[0][1], line[1][0], line[1][1], arcade.color.BLACK, 3)
+        # for line in self.hoop_lines:
+        #     arcade.draw_line(line[0][0], line[0][1], line[1][0], line[1][1], arcade.color.BLACK, 3)
 
     def on_mouse_press(self, x, y, button, modifiers):
         self.mouse_pressed = True
@@ -103,15 +105,18 @@ class Level2(arcade.View):
         if self.mouse_released:
             self.ball.update(delta_time)
             if self.ball_in_target_zone():
-                messagebox.showinfo("Congratulations", "You have completed all levels!")
-                arcade.close_window()
+                from levels.level3 import Level3
+                game_view = Level3()
+                self.window.show_view(game_view)
+                # messagebox.showinfo("Congratulations", "You have completed all levels!")
+                # arcade.close_window()
 
         for surface in self.slanted_surfaces:
             if self.check_slanted_surface_collision(surface):
                 self.reflect_from_slanted_surface(surface)
 
-        if self.check_curved_surface_collision():
-            self.reflect_from_curved_surface()
+        # if self.check_curved_surface_collision():
+        #     self.reflect_from_curved_surface()
 
         for line in self.hoop_lines:
             if self.check_slanted_surface_collision(line):
@@ -120,6 +125,13 @@ class Level2(arcade.View):
     def on_key_press(self, key, modifiers):
         if key == arcade.key.R:
             self.ball.reset()
+        elif key == arcade.key.E:
+            root = tk.Tk()
+            app = ConfigApp(root)
+            root.mainloop()
+            self.window.show_view(self)
+            self.ball.load_config()
+            # self.ball.reset()
 
     def ball_in_target_zone(self):
         return self.target_zone[0][0] < self.ball.x < self.target_zone[1][0] and self.target_zone[0][1] < self.ball.y < self.target_zone[1][1]
@@ -149,18 +161,18 @@ class Level2(arcade.View):
         self.ball.y += self.ball.vy * 0.01
 
     def check_curved_surface_collision(self):
-        center = self.curved_surface['center']
-        radius = self.curved_surface['radius']
+        # center = self.curved_surface['center']
+        # radius = self.curved_surface['radius']
         ball_to_center = np.array([self.ball.x - center[0], self.ball.y - center[1]])
         distance_to_center = np.linalg.norm(ball_to_center)
         if abs(distance_to_center - radius) < self.ball.RADIUS:
             angle = math.degrees(math.atan2(ball_to_center[1], ball_to_center[0]))
-            if self.curved_surface['start_angle'] <= angle <= self.curved_surface['end_angle']:
-                return True
+            # if self.curved_surface['start_angle'] <= angle <= self.curved_surface['end_angle']:
+            #     return True
         return False
 
     def reflect_from_curved_surface(self):
-        center = self.curved_surface['center']
+        # center = self.curved_surface['center']
         ball_to_center = np.array([self.ball.x - center[0], self.ball.y - center[1]])
         surface_normal = ball_to_center / np.linalg.norm(ball_to_center)
         velocity_vector = np.array([self.ball.vx, self.ball.vy])

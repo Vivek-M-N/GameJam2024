@@ -27,7 +27,7 @@ class ConfigApp:
             "Coefficient Of Restitution (-)": 0.01
         }
         self.limits = {
-            "Mass (kg)": (0.1, 3000),
+            "Mass (kg)": (0.1, 300),
             "Drag Coefficient (-)": (0.01, 10),
             "Area (m^2)": (0.1, 10),
             "Air Density (kg/m^3)": (0.1, 10),

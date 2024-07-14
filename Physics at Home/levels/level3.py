@@ -14,7 +14,7 @@ class Level3(arcade.View):
         super().__init__()
         self.background = arcade.load_texture("assets/Background.jpg")
         self.bg_scale = self.background.width / SCREEN_WIDTH
-        self.level = 2
+        self.level = 3
         self.windx = 0
         self.windy = 10000
 
@@ -69,7 +69,7 @@ class Level3(arcade.View):
         arcade.draw_text(f"Level {self.level}", SCREEN_WIDTH * 0.025, SCREEN_HEIGHT - 69, arcade.color.BLACK, 20)
 
         # Draw the hoop images instead of walls
-        arcade.draw_texture_rectangle(1050, 360, 100, 200, self.hoop_texture)
+        arcade.draw_texture_rectangle(1150, 360, 200, 200, self.hoop_texture)
         
         for surface in self.slanted_surfaces:
             arcade.draw_line(surface[0][0], surface[0][1], surface[1][0], surface[1][1], arcade.color.RED, 5)

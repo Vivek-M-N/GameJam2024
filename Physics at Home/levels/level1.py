@@ -25,24 +25,22 @@ class Level1(arcade.View):
         self.current_x = 0
         self.current_y = 0
 
-        self.ball = Circle(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, self.windx, self.windy)
+        self.ball = Circle(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, self.windx, self.windy, 1)
 
-        self.target_zone = ((1000 + self.ball.RADIUS, 260 + self.ball.RADIUS), (1200 - self.ball.RADIUS, 460 - self.ball.RADIUS * 2.5))
+        self.target_zone = ((1000+self.ball.RADIUS,260+self.ball.RADIUS),(1100-self.ball.RADIUS,460-self.ball.RADIUS*2))
 
         # Load the hoop texture
         self.hoop_texture = arcade.load_texture("assets/hoop.png")
 
         self.slanted_surfaces = [
-            ((200, 200), (400, 400)),  # Example coordinates
-            ((500, 100), (700, 300)),
-            ((300, 400), (600, 500)),
-            ((100, 600), (300, 700)),
+            ((740, 360), (1000, 360)),
+            ((100, 600), (300, 700))
         ]
 
         self.curved_surface = {
-            'center': (800, 400),
-            'radius': 100,
-            'start_angle': 0,
+            'center': (600, 300),
+            'radius': 150,
+            'start_angle': 25,
             'end_angle': 180
         }
 
@@ -63,7 +61,7 @@ class Level1(arcade.View):
         arcade.draw_text(f"Level {self.level}", SCREEN_WIDTH * 0.025, SCREEN_HEIGHT - 69, arcade.color.BLACK, 20)
 
         # Draw the hoop images instead of walls
-        arcade.draw_texture_rectangle(1050, 360, 100, 200, self.hoop_texture)
+        arcade.draw_texture_rectangle(1050, 360, 200, 200, self.hoop_texture)
 
         for surface in self.slanted_surfaces:
             arcade.draw_line(surface[0][0], surface[0][1], surface[1][0], surface[1][1], arcade.color.RED, 5)

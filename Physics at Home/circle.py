@@ -55,8 +55,13 @@ class Circle:
 
     def update(self, delta_time):
         if self.level ==2:
-            if 200 < x < 400: 
-                self.windy=1000
+            if 450 < self.x < 600: 
+                self.windy = 20000
+            else:
+                self.windy = 0
+        else:
+            self.windx = 0
+            self.windy = 0
         
         alpha = (self.rho * self.area * self.cd * delta_time) / (2 * self.mass) * np.sign(self.vx)
         b = -1-(self.rho * self.area * self.cd * delta_time * self.windx) / (self.mass) * np.sign(self.vx)
@@ -82,7 +87,7 @@ class Circle:
           
         alpha = (self.rho * self.area * self.cd * delta_time) / (2 * self.mass) * np.sign(self.vy)
         b = -1-(self.rho * self.area * self.cd * delta_time * self.windy) / (self.mass) * np.sign(self.vy)
-        c = self.vy-(self.rho * self.area * self.cd * delta_time * self.windy**2) / (2 * self.mass) * np.sign(self.vy) - self.g*delta_time
+        c = self.vy-(self.rho * self.area * self.cd * delta_time * self.windy**2) / (2 * self.mass) * delta_time * np.sign(self.vy) - self.g*delta_time
         if self.vy == 0:
             self.vy_new = 0
         else:
@@ -92,7 +97,7 @@ class Circle:
             self.vy_new = self.vy_new.flat[np.abs(self.vy_new - self.vy).argmin()]
         self.ay = (self.vy_new - self.vy) / delta_time
         self.y += self.vy_new * delta_time *2  
-        
+            
         if self.y < 0+self.RADIUS:
             self.y = 0+self.RADIUS+1
             self.vy = -self.e*self.vy_new
